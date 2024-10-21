@@ -5,7 +5,7 @@ import torch
 
 
 from huggingface_hub import login
-login(token="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")
+login(token="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")
 
 
 # Load the model and tokenizer
