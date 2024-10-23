@@ -4,45 +4,24 @@ import numpy as np
 import threading
 import whisper
 import time
-import asyncio
 import httpx
 from ollama_python.endpoints import GenerateAPI
-
-"""
-def chat(content):
-    api = GenerateAPI(base_url="http://localhost:8000", model="mistral")
-
-    try:
-        # Sending prompt to the API
-        response = api.generate(
-            prompt=content,
-            images=None,
-            options=None,
-            system=None,
-            stream=False,
-            format="json",
-            template=None,
-            context=None,
-            raw=False
-        )
-
-        # Handling the API response
-        for res in response:
-            if isinstance(res, dict) and 'generated_text' in res:
-                print("Llama API Response:", res['generated_text'])  # <-- Process the response properly
-            else:
-                print("Unexpected response format:", res)
-    except httpx.HTTPError as e:
-        print(f"HTTP Error occurred: {e}")  # <-- Handling HTTP errors
-    except Exception as e:
-        print(f"An error occurred: {e}")  # <-- Handling any other errors
+from transformers import LlamaTokenizer
 
 
-def launch_thread(func, *args):
-    thread = threading.Thread(target=func, args=args, daemon=True)
-    thread.start()
-"""
- 
+# Define the API endpoint and model
+API_URL = "http://localhost:8000/generate"
+MODEL_NAME = "llama-3.2:1b"
+
+# Define the input prompt
+prompt = ""
+
+# Load the tokenizer
+tokenizer = LlamaTokenizer.from_pretrained("meta-llama/Llama-2-7b-chat-hf")
+
+# Tokenize the input prompt
+tokenized_prompt = tokenizer(prompt, return_tensors="pt")
+
 audio_buffer = np.array([],dtype=np.float32)
 model = whisper.load_model("medium.en") 
 
@@ -52,7 +31,33 @@ def process_audio():
         if len(audio_buffer) >= 2000:
             audio_data = audio_buffer.copy()
             transcript = model.transcribe(audio=audio_data,condition_on_previous_text=False,word_timestamps=False)
-            print(transcript['text'])
+            if not transcript['text']:
+                continue
+
+            payload = {
+                "model": MODEL_NAME,
+                "prompt": transcript['text'],
+                "options": {
+                    "max_tokens": 50,
+                    "temperature": 0.7
+                },
+                "pad_token_id": tokenizer.pad_token_id,
+                "attention_mask": tokenized_prompt['attention_mask'].tolist()
+            }
+
+            try:
+                response = httpx.post(API_URL, json=payload, timeout=60.0)
+                response.raise_for_status()
+
+                # Parse and print the response
+                result = response.json()
+                print("Llama 3.2 Response:", result.get("generated_text", "No response text found"))
+            except httpx.TimeoutException:
+                print("The request timed out. The model might be taking too long to respond.")
+            except httpx.HTTPError as exc:
+                print(f"HTTP Error occurred: {exc}")
+            except Exception as e:
+                print(f"An error occurred: {e}")
         time.sleep(.1)
 
 # Start the processing thread
@@ -93,6 +98,40 @@ stop_button = tk.Button(root, text="Stop Recording", command=stop_recording)
 stop_button.pack(pady=10)
 root.mainloop()
 
+"""
+def chat(content):
+    api = GenerateAPI(base_url="http://localhost:8000", model="mistral")
+
+    try:
+        # Sending prompt to the API
+        response = api.generate(
+            prompt=content,
+            images=None,
+            options=None,
+            system=None,
+            stream=False,
+            format="json",
+            template=None,
+            context=None,
+            raw=False
+        )
+
+        # Handling the API response
+        for res in response:
+            if isinstance(res, dict) and 'generated_text' in res:
+                print("Llama API Response:", res['generated_text'])  # <-- Process the response properly
+            else:
+                print("Unexpected response format:", res)
+    except httpx.HTTPError as e:
+        print(f"HTTP Error occurred: {e}")  # <-- Handling HTTP errors
+    except Exception as e:
+        print(f"An error occurred: {e}")  # <-- Handling any other errors
+
+
+def launch_thread(func, *args):
+    thread = threading.Thread(target=func, args=args, daemon=True)
+    thread.start()
+"""
 """
 from pyannote.audio import Model
 from pyannote.audio.pipelines import VoiceActivityDetection

@@ -6,7 +6,7 @@ import torch
 
 from huggingface_hub import login
 # in secrets
-login(token="HUGGINGFACE_TOKEN")
+login(token="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")
 
 
 # Load the model and tokenizer
