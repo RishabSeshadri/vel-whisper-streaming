@@ -1,44 +1,65 @@
-import socket
-import socket
-from whisper_online import FasterWhisperASR, OnlineASRProcessor
-import os
-os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
+import tkinter as tk
+import sounddevice as sd
+import numpy as np
+import threading
+import whisper
+import time
+audio_buffer = np.array([],dtype=np.float32)
+model = whisper.load_model("tiny.en") 
 
-# Server settings
-HOST = 'localhost'
-PORT = 3000
+full_transcript = np.array([],dtype=np.float32)
 
-# Initialize Whisper
-asr = FasterWhisperASR("en", "large-v2")
-online = OnlineASRProcessor(asr)
+def process_audio():
+    global audio_buffer
+    while True:
+        if len(audio_buffer) >= 2000:
+            audio_data = audio_buffer.copy()
+            transcript = model.transcribe(audio=audio_data,condition_on_previous_text=False,word_timestamps=False)
+            if transcript['text']:
+                print(transcript['text'], flush=True)
+                if transcript['text'].find('.') > 0:
+                    np.append(full_transcript, transcript['text'])
+                    #audio_buffer = np.array([],dtype=np.float32)
+        time.sleep(.1)
 
-def start_server():
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind((HOST, PORT))
-        s.listen()
-        print(f"Server listening on {HOST}:{PORT}...")
+# Start the processing thread
+processing_thread = threading.Thread(target=process_audio, daemon=True)
+processing_thread.start()
 
-        conn, addr = s.accept()
-        with conn:
-            print(f"Connected by {addr}")
-            while True:
-                data = conn.recv(1024)
-                if not data:
-                    break
-                
-                # Pass the received audio data to Whisper
-                online.insert_audio_chunk(data)
-                result = online.process_iter()
-                if result:
-                    print(result)
+def callback(indata, frames, time, status):
+    global audio_buffer
+    audio_buffer = np.append(audio_buffer,np.squeeze(indata))
 
-            # Final output
-            final_result = online.finish()
-            print(final_result)
+def start_recording():
+    global stream
+    global start_button
+    global stop_button
+    start_button.config(state=tk.DISABLED)
+    stop_button.config(state=tk.NORMAL)
 
-if __name__ == "__main__":
-    start_server()
+    stream = sd.InputStream(samplerate=16000, device=1,channels=1, callback=callback, dtype=np.float32)
+    stream.start()
 
+def stop_recording():
+    global audio_buffer
+    global stream
+    global start_button
+    global stop_button
+    start_button.config(state=tk.NORMAL)
+    stop_button.config(state=tk.DISABLED)
+    audio_buffer = np.array([],dtype=np.float32)
+    stream.stop()
+    stream.close()
+    print(full_transcript)
+
+root = tk.Tk()
+root.title("Microphone Recorder")
+root.geometry("300x150")
+start_button = tk.Button(root, text="Start Recording", command=start_recording)
+start_button.pack(pady=10)
+stop_button = tk.Button(root, text="Stop Recording", command=stop_recording)
+stop_button.pack(pady=10)
+root.mainloop()
 
 
 """
