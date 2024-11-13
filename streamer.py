@@ -17,9 +17,7 @@ def process_audio():
             transcript = model.transcribe(audio=audio_data,condition_on_previous_text=False,word_timestamps=False)
             if transcript['text']:
                 print(transcript['text'], flush=True)
-                if transcript['text'].find('.') > 0:
-                    np.append(full_transcript, transcript['text'])
-                    #audio_buffer = np.array([],dtype=np.float32)
+                #audio_buffer = np.array([],dtype=np.float32)
         time.sleep(.1)
 
 # Start the processing thread
