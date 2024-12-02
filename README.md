@@ -13,7 +13,7 @@ The experiments were generally split into two parts - first, improving the effic
 
 Significant improvements were found with the first part - the first approach used was to pick the largest and most efficient model, 'Turbo'. While this worked extremely well on the RTX 4090 GPUs, that was not the most accessible option. However, Whisper's 'Tiny' model was not accurate enough to be used for a direct stream into Llama. Additionally, when a user was not actually talking, the tiny model (as compared to the other versions) was much more susceptible for reading noise and creating random words. 
 
-The next step was to process the input multiple times to allow for a better read on what a user was saying, as used in this ASR [https://www.youtube.com/watch?v=_spinzpEeFM] application.
+The next step was to process the input multiple times to allow for a better read on what a user was saying, as used in this [ASR application](https://www.youtube.com/watch?v=_spinzpEeFM).
 
 When a word/sentence was processed 3 times repeatedly in the audio buffer, it was completely moved into a 'completed' buffer. This allowed for a working transcript of a user to be repeatedly updated, but only with confirmed words. Even with the use of the less-accurate 'Tiny' model, the results were extremely accurate when working with a mid-range microphone.
 
