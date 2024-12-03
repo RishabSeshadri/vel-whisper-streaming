@@ -30,6 +30,16 @@ If you would just like to run the speech-to-text segment, this can be done by fo
 Note that the input device ID will have to be set here as well.
 
 ----------------------------------------------
+# Demo Videos
+Full pipeline:
+
+[![Full Pipeline](https://img.youtube.com/vi/pCRELIIStys/0.jpg)](https://youtu.be/pCRELIIStys)
+
+Streamer only:
+
+[![Streamer only](https://img.youtube.com/vi/mB8WwrAygag/0.jpg)](https://youtu.be/mB8WwrAygag)
+
+----------------------------------------------
 
 ## Speech-to-text Experiments
 The experiments were generally split into two parts - first, improving the efficiency of the speech-to-text algorithm from Whisper, and second, to improve the responses fed to Llama in a way that could allow a streaming or near-streaming simulation.
