@@ -20,6 +20,7 @@ Then, alongside it, run the streaming code:
 
 ```$ python3 pipeline_final.py```
 
+When running the streaming code, you must make sure you select the correct audio input for your system. Running the code will print out all the available audio devices - select your input device's ID and set the variable at the top of `pipeline_final.py` to this.
 
 ### Speech-to-text Experiments
 ----------------------------------------------

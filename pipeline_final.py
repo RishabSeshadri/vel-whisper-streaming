@@ -7,6 +7,9 @@ import time
 import httpx
 from transformers import LlamaTokenizer
 
+# Set before running
+input_device_id = 2
+
 # Set up constants and initial variables
 API_URL = "http://localhost:8000/generate"
 MODEL_NAME = "meta-llama/Llama-2-7b-chat-hf"
@@ -212,7 +215,7 @@ def start_recording():
     start_button.config(state=tk.DISABLED)
     stop_button.config(state=tk.NORMAL)
 
-    stream = sd.InputStream(samplerate=sample_rate, device=2, channels=1, callback=callback, dtype=np.float32)
+    stream = sd.InputStream(samplerate=sample_rate, device=input_device_id, channels=1, callback=callback, dtype=np.float32)
     stream.start()
 
 def stop_recording():
