@@ -24,7 +24,7 @@ audio_offset = 0.0
 last_confirmed_end_time = 0.0
 
 # Initialize Whisper model
-model = whisper.load_model("tiny.en")
+model = whisper.load_model("base.en")
 
 # Initialize Llama tokenizer
 tokenizer = LlamaTokenizer.from_pretrained("meta-llama/Llama-2-7b-chat-hf")
@@ -62,7 +62,6 @@ def process_audio():
                     # Detect a period as a potential pause or end-of-sentence
                     if text == ".":
                         # Treat this as a pause and handle it separately
-                        send_waiting_message_to_llama()
                         continue  # Skip sending the period
 
                     if text.endswith('.') or text.endswith('?'):
@@ -111,43 +110,6 @@ def process_audio():
                 print(unconfirmed_transcript, flush=True)
         time.sleep(0.1)
 
-def send_waiting_message_to_llama():
-    """
-    Sends a special message to the Llama API indicating the system is waiting for user input.
-    """
-    global is_waiting_for_response
-    with processing_lock:
-        is_waiting_for_response = True
-
-    message = "Waiting for the user to speak..."
-    print(f"Sending to Llama API: {message}")  # Debug message
-    try:
-        payload = {
-            "model": MODEL_NAME,
-            "prompt": message,
-            "options": {
-                "max_tokens": 250,
-                "temperature": 0.2
-            },
-            "pad_token_id": tokenizer.pad_token_id
-        }
-        response = httpx.post(API_URL, json=payload, timeout=60.0)
-        response.raise_for_status()
-
-        # Parse and print the response
-        result = response.json()
-        print("Llama Response:", result.get("generated_text", "No response text found"))
-    except httpx.TimeoutException:
-        print("The request timed out. The model might be taking too long to respond.")
-    except httpx.HTTPError as exc:
-        print(f"HTTP Error occurred: {exc}")
-    except Exception as e:
-        print(f"An error occurred: {e}")
-
-    # Unlock and allow audio processing to continue after the response is received
-    with processing_lock:
-        is_waiting_for_response = False
-
 def send_to_llama(text):
     """
     Sends the confirmed text to Llama API and prints the response.
@@ -162,14 +124,14 @@ def send_to_llama(text):
         "model": MODEL_NAME,
         "prompt": text,
         "options": {
-            "max_tokens": 50,
+            "max_tokens": 250,
             "temperature": 0.7
         },
         "pad_token_id": tokenizer.pad_token_id,
         "attention_mask": tokenized_prompt['attention_mask'].tolist()
     }
 
-    print(f"Sending to Llama API: {text}")  # Message to terminal
+    print(f"Sending to Llama API: {text}")
     try:
         response = httpx.post(API_URL, json=payload, timeout=60.0)
         response.raise_for_status()
@@ -230,7 +192,6 @@ def stop_recording():
     stream.close()
     print(full_transcript)
 
-# Initialize the Tkinter UI
 root = tk.Tk()
 root.title("Microphone Recorder")
 root.geometry("300x150")
