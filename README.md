@@ -5,15 +5,21 @@ The main purpose of this research project is to test and work to reduce latency 
 ### How to Run:
 ----------------------------------------------
 Ensure all the libraries are correctly installed (i.e. openai-whisper, transformers, etc.), and Python 3 is being used. You can install these libraries by running:
+
 ```$ pip3 install requirements.txt```
+
 
 Note: This may not install the HuggingFace CLI. This is necessary for running the Llama model - create an account and request access on [huggingface](huggingface.co), then create an access token with write permissions. Use this to log in to the huggingface cli, and you'll be set to use Llama.
 
 You can run the Llama api by using the following:
+
 ```$ uvicorn llama_api:app --host 0.0.0.0 --port 8000 --reload```
 
+
 Then, alongside it, run the streaming code:
+
 ```$ python3 pipeline_final.py```
+
 
 ### Speech-to-text Experiments
 ----------------------------------------------
